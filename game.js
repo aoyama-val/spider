@@ -9,6 +9,7 @@ var G = {
   mouseX: 0,
   canonAngle: 90,
   score: 0,
+  spawnDC: 30,
   displayingScore: 0,
 };
 
@@ -22,15 +23,13 @@ var Spider = function() {
   that.frameDC = 0;
 
   // 初期位置
-  that.x = 200;
-  that.y = 200;
-
-  that.x = 0;
-  that.y = 0;
+  that.x = G.CANVAS_W * Math.random();
+  that.y = G.CANVAS_H * Math.random();
 
   that.setSpeed();
 
   var obj = document.createElement("img");
+  obj.id = that.id;
   obj.src = "spider.png";
   obj.width = 40 + that.size;
   obj.height = 40 + that.size;
@@ -61,16 +60,29 @@ Spider.prototype = {
       that.setSpeed();
       that.frameDC = Math.floor(Math.random() * G.FPS * 3);
 
-      that.isAlive = false;
+      //that.isAlive = false;
     }
   },
 
   setSpeed: function() {
     var that = this;
     var direction = Math.random() * 2 * Math.PI;
-    var speed = Math.random() * 10;
+    //var speed = Math.random() * 10;
+    var speed = 1;
     that.speedX = Math.cos(direction) * speed;
     that.speedY = Math.sin(direction) * speed;
+  },
+
+  getCenter: function() {
+    var that = this;
+    return [that.x + that.obj.width / 2, that.y + that.obj.height / 2];
+  },
+
+  die: function() {
+    var that = this;
+    that.isAlive = false;
+    G.score += 3 * (30 + that.size);
+    G.spawnDC = secondsToFrame(2.0);
   },
 
   draw: function() {
@@ -111,7 +123,24 @@ Bullet.prototype = {
     that.y += that.speedY;
     if (that.x < 0 || that.x > G.CANVAS_W || that.y < 0 || that.y > G.CANVAS_H) {
       removeBullet();
+    } else {
+      that.checkCollision();
     }
+  },
+
+  getCenter: function() {
+    var that = this;
+    return [that.x + that.obj.width / 2, that.y + that.obj.height / 2];
+  },
+
+  checkCollision: function() {
+    var that = this;
+    G.entities.forEach(function(e) {
+      var dist = distance(that.getCenter(), e.getCenter());
+      if (dist < 20) {
+        e.die();
+      }
+    });
   },
 
   draw: function() {
@@ -153,7 +182,6 @@ function start() {
     G.bullet = new Bullet();
   });
 
-  spawnSpider();
 }
 
 function clamp(v, min, max) {
@@ -188,8 +216,10 @@ function action() {
     G.bullet.action();
   }
 
-  if (Math.random() < 0.002) {
+  G.spawnDC -= 1;
+  if (G.spawnDC <= 0) {
     spawnSpider();
+    G.spawnDC = secondsToFrame(2 + 10 * Math.random());
   }
 }
 
@@ -207,17 +237,23 @@ function draw() {
     G.bullet.draw();
   }
 
-  G.displayingScore += 3;
+  G.displayingScore += 2;
   G.displayingScore = clamp(G.displayingScore, 0, G.score);
 
-  $('#canonAngle').text(G.canonAngle);
   $('#score').text(G.displayingScore);
 }
 
 function secondsToFrame(seconds) {
-  return seconds * G.FPS;
+  return Math.ceil(seconds * G.FPS);
 }
 
 function deg2rad(deg) {
   return deg / 180.0 * Math.PI;
+}
+
+function distance(p1, p2) {
+  var dx = p1[0] - p2[0];
+  var dy = p1[1] - p2[1];
+  var dist = Math.sqrt(dx * dx + dy * dy);
+  return dist;
 }
