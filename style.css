@@ -1,0 +1,27 @@
+/* vim: set ts=2 sts=2 sw=2 expandtab list: */
+@charset 'UTF-8';
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+.entity {
+  position: absolute;
+}
+
+div#canvas {
+  position: absolute;
+  width: 800px;
+  height: 450px;
+  margin: 50px;
+  border: 1px solid #666;
+}
+
+img#canon {
+  width: 70px;
+  height: 70px;
+  position: absolute;
+  bottom: 0px;
+  left: 350px;
+}
