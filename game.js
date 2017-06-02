@@ -68,8 +68,8 @@ Spider.prototype = {
   setSpeed: function() {
     var that = this;
     var direction = Math.random() * 2 * Math.PI;
-    //var speed = Math.random() * 10;
-    var speed = 1;
+    var speed = Math.random() * 10;
+    //var speed = 1;
     that.speedX = Math.cos(direction) * speed;
     that.speedY = Math.sin(direction) * speed;
   },
