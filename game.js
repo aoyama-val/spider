@@ -6,6 +6,7 @@ var G = {
   frame: 0,
   lastId: 0,
   entities: [],
+  effects: [],
   mouseX: 0,
   canonAngle: 90,
   score: 0,
@@ -82,6 +83,7 @@ Spider.prototype = {
     var that = this;
     that.isAlive = false;
     G.score += 3 * (30 + that.size);
+    G.effects.push(new Effect(that.x, that.y));
     G.spawnDC = secondsToFrame(2.0);
   },
 
@@ -95,6 +97,45 @@ Spider.prototype = {
     }
   }
 };
+
+Effect = function(x, y) {
+  var that = this;
+  that.x = x;
+  that.y = y;
+  that.frame = secondsToFrame(1.0);
+
+  var obj = document.createElement("img");
+  obj.src = "crash2.png";
+  obj.width = 40;
+  obj.height = 40;
+  obj.className = "entity";
+  that.obj = obj;
+  that.appended = false;
+};
+
+Effect.prototype = {
+  action: function() {
+    var that = this;
+    that.frame -= 1;
+    that.isAlive = true;
+    that.appended = false;
+    if (that.frame < 0) {
+      that.isAlive = false;
+    }
+
+  },
+  draw: function() {
+    var that = this;
+    if (that.obj) {
+      that.obj.style.left = that.x + "px";
+      that.obj.style.top  = that.y + "px";
+    }
+    if (!that.appended) {
+      document.getElementById("canvas").appendChild(that.obj);
+      that.appended = true;
+    }
+  }
+}
 
 Bullet = function() {
   var that = this;
@@ -136,10 +177,15 @@ Bullet.prototype = {
   checkCollision: function() {
     var that = this;
     G.entities.forEach(function(e) {
-      var dist = distance(that.getCenter(), e.getCenter());
-      if (dist < 20) {
+      if (isCollide(
+        that.x, that.y, $(that.obj).width(), $(that.obj).height(),
+        e.x, e.y, $(e.obj).width(), $(e.obj).height())) {
         e.die();
       }
+      //var dist = distance(that.getCenter(), e.getCenter());
+      //if (dist < 20) {
+        //e.die();
+      //}
     });
   },
 
@@ -212,13 +258,26 @@ function action() {
   });
   G.entities = tmp;
 
+  var tmp2 = [];
+  G.effects.forEach(function(e) {
+    e.action();
+    if (e.isAlive) {
+      tmp2.push(e);
+    } else {
+      $(e.obj).remove();
+    }
+  });
+  G.effects = tmp2;
+
   if (G.bullet != null) {
     G.bullet.action();
   }
 
   G.spawnDC -= 1;
   if (G.spawnDC <= 0) {
-    spawnSpider();
+    if (G.entities.length < 10) {
+      spawnSpider();
+    }
     G.spawnDC = secondsToFrame(2 + 10 * Math.random());
   }
 }
@@ -230,6 +289,10 @@ function spawnSpider() {
 
 function draw() {
   G.entities.forEach(function(e) {
+    e.draw();
+  });
+
+  G.effects.forEach(function(e) {
     e.draw();
   });
 
@@ -257,3 +320,11 @@ function distance(p1, p2) {
   var dist = Math.sqrt(dx * dx + dy * dy);
   return dist;
 }
+
+function isCollide(x1, y1, w1, h1, x2, y2, w2, h2) {
+    return ( x1 < x2 + w2  &&
+             x2 < x1 + w1  &&
+             y1 < y2 + h2  &&
+             y2 < y1 + h1  );
+}
+
